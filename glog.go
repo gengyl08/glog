@@ -464,9 +464,6 @@ type buffer struct {
 
 var logging loggingT
 
-// LoggingPtr is logging exposed to out of the glog module.
-var LoggingPtr = &logging
-
 // setVState sets a consistent state for V logging.
 // l.mu is held.
 func (l *loggingT) setVState(verbosity Level, filter []modulePat, setFilter bool) {
