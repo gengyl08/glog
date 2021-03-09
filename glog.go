@@ -464,6 +464,9 @@ type buffer struct {
 
 var logging loggingT
 
+// LoggingPtr is logging exposed to out of the glog module.
+var LoggingPtr = &logging
+
 // setVState sets a consistent state for V logging.
 // l.mu is held.
 func (l *loggingT) setVState(verbosity Level, filter []modulePat, setFilter bool) {
@@ -521,13 +524,10 @@ It returns a buffer containing the formatted header and the user's file and line
 The depth specifies how many stack frames above lives the source line to be identified in the log message.
 
 Log lines have this form:
-	Lyyyymmdd hh:mm:ss.uuuuuu threadid file:line] msg...
+	LRFC3339Micro threadid file:line] msg...
 where the fields are defined as follows:
 	L                A single character, representing the log level (eg 'I' for INFO)
-	yyyy             The year
-	mm               The month (zero padded; ie May is '05')
-	dd               The day (zero padded)
-	hh:mm:ss.uuuuuu  Time in hours, minutes and fractional seconds
+	RFC3339Micro     Timestamp in RFC3339Micro format
 	threadid         The space-padded thread ID as returned by GetTID()
 	file             The file name
 	line             The line number
@@ -558,33 +558,9 @@ func (l *loggingT) formatHeader(s severity, file string, line int) *buffer {
 	}
 	buf := l.getBuffer()
 
-	// Avoid Fprintf, for speed. The format is so simple that we can do it quickly by hand.
-	// It's worth about 3X. Fprintf is hard.
-	year, month, day := now.Date()
-	hour, minute, second := now.Clock()
-	// Lmmdd hh:mm:ss.uuuuuu threadid file:line]
-	buf.tmp[0] = severityChar[s]
-	buf.nDigits(4, 1, year, '0')
-	buf.twoDigits(5, int(month))
-	buf.twoDigits(7, day)
-	buf.tmp[9] = ' '
-	buf.twoDigits(10, hour)
-	buf.tmp[12] = ':'
-	buf.twoDigits(13, minute)
-	buf.tmp[15] = ':'
-	buf.twoDigits(16, second)
-	buf.tmp[18] = '.'
-	buf.nDigits(6, 19, now.Nanosecond()/1000, '0')
-	buf.tmp[25] = ' '
-	buf.nDigits(7, 26, pid, ' ') // TODO: should be TID
-	buf.tmp[33] = ' '
-	buf.Write(buf.tmp[:34])
-	buf.WriteString(file)
-	buf.tmp[0] = ':'
-	n := buf.someDigits(1, line)
-	buf.tmp[n+1] = ']'
-	buf.tmp[n+2] = ' '
-	buf.Write(buf.tmp[:n+3])
+	header := fmt.Sprintf("%s%s %d %s:%d] ", string(severityChar[s]),
+		now.Format("2006-01-02T15:04:05.999999Z07:00"), pid, file, line)
+	buf.Write([]byte(header))
 	return buf
 }
 
