@@ -556,7 +556,7 @@ func (l *loggingT) formatHeader(s severity, file string, line int) *buffer {
 	buf := l.getBuffer()
 
 	header := fmt.Sprintf("%s%s %d %s:%d] ", string(severityChar[s]),
-		now.Format("2006-01-02T15:04:05.999999Z07:00"), pid, file, line)
+		now.Format("2006-01-02T15:04:05.000000Z07:00"), pid, file, line)
 	buf.Write([]byte(header))
 	return buf
 }

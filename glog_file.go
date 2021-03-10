@@ -86,7 +86,7 @@ func logName(tag string, t time.Time) (name, link string) {
 		host,
 		userName,
 		tag,
-		t.Format(time.RFC3339),
+		t.Format("2006-01-02T150405Z0700"),
 		pid)
 	return name, program + "." + tag
 }
